@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { register, login,todos,actualizarUsuario,actualizarUsuarioAdmin } from "../db/usuariosBD.js";
+import { register, login,todos,actualizarUsuario,actualizarAdmin} from "../db/usuariosBD.js";
 import { usuarioAutorizado, adminAutorizado} from "../middlewares/funcionesPassword.js";
 import { verificarToken } from "../libs/jwt.js";
 const router = Router();
@@ -57,35 +57,24 @@ router.get("/obtenerTodosUsuarios", todos);
 // 🔹 Actualizar perfil de usuario (autenticado)
 // 🔹 Buscar usuario por ID
 // 🔹 Actualizar perfil de usuario (autenticado)
-router.put("/usuarios/:id", verificarToken, async (req, res) => {
-    if (req.usuario.tipoUsuario !== "admin") {
-        return res.status(403).json({ mensaje: "No tienes permisos para actualizar este usuario" });
-    }
+router.put("/usuarios/:id", async (req, res) => {
+    const respuesta = await actualizarUsuario(req.params.id, req.body);
+    console.log(respuesta);
+    res.status(respuesta.status).json(respuesta.mensajeUsuario);
+  });
 
+
+  router.put("/admins/:id", async (req, res) => {
     try {
-        const usuarioActualizado = await Usuario.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        res.json(usuarioActualizado);
+        const respuesta = await actualizarAdmin(req.params.id, req.body);
+        console.log(respuesta);
+        res.status(respuesta.status).json(respuesta.mensajeAdmin);
     } catch (error) {
-        res.status(500).json({ mensaje: "Error al actualizar usuario" });
+        console.error("Error al actualizar admin:", error);
+        res.status(500).json({ mensaje: "Error interno del servidor" });
     }
 });
 
-
-router.put("/admin/actualizarUsuario/:id", async (req, res, next) => {
-    try {
-        const token = req.headers.authorization?.split(" ")[1]; // Extrae el token
-        const usuario = await verificarToken(token); // Verifica el token
-
-        if (usuario.tipoUsuario !== "admin") {
-            return res.status(403).json(mensajes(403, "No tienes permisos para esta acción"));
-        }
-
-        req.usuario = usuario; // Guarda el usuario en la request
-        next(); // Continúa con la ejecución del controlador
-    } catch (error) {
-        res.status(error.codigo || 500).json(error);
-    }
-}, actualizarUsuario);
   
   // 🔹 Buscar usuario por ID
 router.get("/buscarPorId/:id", async (req, res) => {
@@ -98,18 +87,6 @@ router.get("/buscarPorId/:id", async (req, res) => {
     }
 });
   
- // ✅ Eliminar usuario (admin)
-export const eliminarUsuarioAdmin = async (id, token) => {
-    try {
-        const respuesta = await axios.delete(`${API}/admin/borrarUsuario/${id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        return respuesta.data;
-    } catch (error) {
-        console.error("Error al eliminar usuario:", error);
-        return null;
-    }
-};
 
 
 export default router;

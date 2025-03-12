@@ -91,43 +91,33 @@ export const borrarUsuario = async (id) => {
     }
 };
 
-export const actualizarUsuario = async (id, nuevosDatos, usuarioAutenticado) => {
+export const actualizarUsuario = async (id, datos) => {
     try {
-        const usuario = await User.findById(id);
-        if (!usuario) {
-            return mensajes(404, "Usuario no encontrado");
-        }
-
-        // Si no es admin, solo puede cambiar su email y contraseña
-        if (usuarioAutenticado.tipoUsuario !== "admin") {
-            nuevosDatos = {
-                email: nuevosDatos.email || usuario.email,
-                password: nuevosDatos.password || usuario.password
-            };
-        }
-
-        // Actualiza los datos en MongoDB
-        await User.findByIdAndUpdate(id, nuevosDatos);
-        return mensajes(200, "Usuario actualizado correctamente");
+      const usuario = await User.findByIdAndUpdate(id, datos, { new: true });
+  
+      if (!usuario) {
+        return mensajes(404, "Usuario no encontrado", "No se encontró un usuario con ese ID");
+      }
+  
+      return mensajes(200, "Usuario actualizado correctamente", "", usuario);
     } catch (error) {
-        return mensajes(500, "Error al actualizar usuario", error.message);
+      return mensajes(404, "Error al actualizar el usuario", error);
+    }
+  };
+  
+  export const actualizarAdmin = async (id, datos) => {
+    try {
+        const admin = await User.findByIdAndUpdate(id, datos, { new: true });
+        if (!admin) {
+            return { status: 404, mensajeAdmin: "Admin no encontrado" };
+        }
+        return { status: 200, mensajeAdmin: "Admin actualizado con éxito", admin };
+    } catch (error) {
+        console.error("Error en actualizarAdmin:", error);
+        return { status: 500, mensajeAdmin: "Error al actualizar admin" };
     }
 };
 
-export const actualizarUsuarioAdmin = async (id, nuevosDatos) => {
-    try {
-        const usuario = await User.findById(id);
-        if (!usuario) {
-            return mensajes(404, "Usuario no encontrado");
-        }
-
-        // Actualiza los datos en MongoDB
-        const usuarioActualizado = await User.findByIdAndUpdate(id, nuevosDatos, { new: true });
-        return mensajes(200, "Usuario actualizado correctamente", usuarioActualizado);
-    } catch (error) {
-        return mensajes(500, "Error al actualizar usuario", error.message);
-    }
-};
 
 export const isAdmin = async (id) => {
     try {
@@ -163,5 +153,17 @@ export const todos = async (req, res) => {
             mensajeUsuario: "Error al obtener usuarios",
             error: error.message
         });
+    }
+};
+ // ✅ Eliminar usuario (admin)
+ export const eliminarUsuarioAdmin = async (id, token) => {
+    try {
+        const respuesta = await axios.delete(`${API}/admin/borrarUsuario/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return respuesta.data;
+    } catch (error) {
+        console.error("Error al eliminar usuario:", error);
+        return null;
     }
 };
