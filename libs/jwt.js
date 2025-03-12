@@ -18,3 +18,18 @@ export function crearToken(dato){
         );
     });
 }
+
+export function verificarToken(token) {
+    return new Promise((resolve, reject) => {
+        if (!token) {
+            reject(mensajes(401, "Acceso denegado. No hay token"));
+        }
+
+        jwt.verify(token, process.env.SECRET_TOKEN, (err, usuario) => {
+            if (err) {
+                reject(mensajes(403, "Token inválido o expirado"));
+            }
+            resolve(usuario); // Retorna los datos del usuario
+        });
+    });
+}

@@ -41,20 +41,19 @@ export async function adminAutorizado(req, res, next) {
         return res.status(401).json({ mensaje: "Usuario no autorizado - token requerido" });
     }
 
-    jwt.verify(token, process.env.SECRET_TOKEN, async (error, usuario) => {
-        if (error) {
-            return res.status(403).json({ mensaje: "Token no válido" });
-        }
-
+    try {
+        const usuario = await verificarToken(token);
         req.usuario = usuario;
         const usuarioDB = await buscaUsuarioPorID(usuario.id);
         if (!usuarioDB || usuarioDB.tipoUsuario !== "admin") {
             return res.status(403).json({ mensaje: "Admin no autorizado" });
         }
-
         next(); 
-    });
+    } catch (error) {
+        return res.status(403).json({ mensaje: "Token no válido", error: error.message });
+    }
 }
+
 export function verificarToken(req, res, next) {
     const token = req.cookies.token;  
     if (!token) {
