@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { register, login,todos,actualizarUsuario,actualizarAdmin} from "../db/usuariosBD.js";
+import { register, login,todos,actualizarUsuario,actualizarAdmin,borrarUsuario} from "../db/usuariosBD.js";
 import { usuarioAutorizado, adminAutorizado} from "../middlewares/funcionesPassword.js";
 import { verificarToken } from "../libs/jwt.js";
 const router = Router();
@@ -34,7 +34,7 @@ router.get("/salir", async (req, res) => {
     }
 });
 
-router.get("/usuarios", async (req, res) => {
+router.get("/usuario", async (req, res) => {
     try {
         const respuesta = usuarioAutorizado(req.cookies.token, req);
         res.status(respuesta.status).json(respuesta.mensajeUsuario);
@@ -55,14 +55,6 @@ router.get("/administradores", async (req, res) => {
 router.get("/obtenerTodosUsuarios", todos);
 
 // 🔹 Actualizar perfil de usuario (autenticado)
-// 🔹 Buscar usuario por ID
-// 🔹 Actualizar perfil de usuario (autenticado)
-router.put("/usuarios/:id", async (req, res) => {
-    const respuesta = await actualizarUsuario(req.params.id, req.body);
-    console.log(respuesta);
-    res.status(respuesta.status).json(respuesta.mensajeUsuario);
-  });
-
 
   router.put("/admins/:id", async (req, res) => {
     try {
@@ -74,6 +66,13 @@ router.put("/usuarios/:id", async (req, res) => {
         res.status(500).json({ mensaje: "Error interno del servidor" });
     }
 });
+// 🔹 Buscar usuario por ID
+// 🔹 Actualizar perfil de usuario (autenticado)
+router.put("/usuarios/:id", async (req, res) => {
+    const respuesta = await actualizarUsuario(req.params.id, req.body);
+    console.log(respuesta);
+    res.status(respuesta.status).json(respuesta.mensajeUsuario);
+  });
 
   
   // 🔹 Buscar usuario por ID
@@ -86,7 +85,36 @@ router.get("/buscarPorId/:id", async (req, res) => {
         res.status(500).json({ mensaje: "Error al buscar usuario", error: error.message });
     }
 });
+router.delete("/usuarios/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const resultado = await borrarUsuario(id);
+        res.status(resultado.status).json(resultado);
+    } catch (error) {
+        res.status(500).json({ status: 500, mensaje: "Error interno del servidor", error: error.message });
+    }
+});
   
+router.put("/actualizarPassword", async (req, res) => {
+    try {
+        const { email, newPassword } = req.body;
 
+        if (!email || !newPassword) {
+            return res.status(400).json({ mensaje: "Faltan datos" });
+        }
+
+        const actualizado = await actualizarPassword(email, newPassword);
+
+        if (!actualizado) {
+            return res.status(400).json({ mensaje: "Error al actualizar la contraseña" });
+        }
+
+        return res.json({ mensaje: "Contraseña actualizada correctamente" });
+
+    } catch (error) {
+        console.error("Error en /actualizarPassword:", error);
+        return res.status(500).json({ mensaje: "Error interno del servidor" });
+    }
+});
 
 export default router;

@@ -19,7 +19,7 @@ export function encriptarPassword(password){
 
 export function validarPassword(password, salt, hash){
     const hashEvaluar = crypto.scryptSync(password, salt, 10, 64, "sha512").toString("hex");    
-    return hashEvaluar == hash;
+    return hashEvaluar === hash;
 }
 
 export function usuarioAutorizado(token, req) {

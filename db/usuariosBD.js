@@ -167,3 +167,20 @@ export const todos = async (req, res) => {
         return null;
     }
 };
+
+
+export async function actualizarPassword(email, newPassword) {
+    try {
+        const { salt, hash } = encriptarPassword(newPassword); // Encripta la nueva contraseña
+
+        const resultado = await db.collection("users").updateOne(
+            { email },
+            { $set: { password: hash, salt } }
+        );
+
+        return resultado.modifiedCount > 0; // Devuelve true si se actualizó correctamente
+    } catch (error) {
+        console.error("Error en actualizarPassword:", error);
+        return false;
+    }
+}
